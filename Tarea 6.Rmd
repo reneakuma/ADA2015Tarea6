@@ -1,0 +1,116 @@
+---
+title: "Tarea 6"
+author: "Rene Gabriel Valladares Elizarraras"
+date: "January 03, 2016"
+output: html_document
+---
+
+## Paso 6a
+
+Cargar los paquetes necesarios si ??stos no han sido cargados.
+
+```{r}
+PACKAGES<-c("gdata","R.utils")
+for (package in PACKAGES ) {
+  if (!require(package, character.only=T, quietly=T)) {
+      install.packages(package)
+      library(package)
+  }
+}
+```
+
+## Paso 6b
+
+Establecemos el directorio de trabajo
+
+```{r}
+setwd("~/dev/workspaceR/Tarea6")
+```
+
+## Paso 6c
+
+Validamos la existencia y creamos un directorio de descarga, de no existir.
+
+```{r}
+# Se establece el valor de las variables usadas en
+# las siguientes funciones
+DIR<-"./descarga"
+if( !file.exists(DIR) ) {
+  dir.create(file.path(DIR), recursive=TRUE) 
+  if( !dir.exists(DIR) ) {
+    stop("No existe directorio")
+  }
+}
+```
+
+## Paso 6d
+
+Validamos la existencia y creamos un directorio de datos, de no existir.
+
+```{r}
+# Se establece el valor de las variables usadas en
+# las siguientes funciones
+DIR<-"./datos"
+if( !file.exists(DIR) ) {
+  dir.create(file.path(DIR), recursive=TRUE) 
+  if( !dir.exists(DIR) ) {
+    stop("No existe directorio")
+  }
+}
+```
+
+## Paso 6e
+
+El script contar?? con la lista de los nombres de archivos a trabajar. Si el archivo no est?? presente en el directorio de datos deber?? buscarse en el directorio de descarga, si no est?? presente deber?? descargarse.
+```{r}
+FILES<-read.csv("ligas.csv")
+```
+
+## Paso 6f
+
+Una vez descargado el archivo, y ya presente en el sistema deber?? descompactarse dejando el archivo de datos en el directorio apropiado. La siguiente idea puede ser ??til para estos dos ??ltimos pasos descritos:
+
+```{r}
+# FILES es la lista de archivos para ser descargados.
+# Otras variables deben ser declaradas para evitar colocar rutas en el c??digo.
+for( file in FILES$NOMBRE_ARCHIVO ){
+  # Se valida si el archivo descompactado ya existe en el ??rea de datos.
+  if( ! file.exists(paste("./datos/",file,".csv", sep=""))) {
+    # Si no existe se busca el archivo compactado en el ??rea de descarga.
+    if( ! file.exists(paste("./descarga/",file,".csv.gz", sep="")) ){
+        download.file(paste("http://www1.ncdc.noaa.gov/pub/data/swdi/stormevents/csvfiles/",file,".csv.gz", sep=""),paste("./descarga/",file,".csv.gz", sep="")) 
+      gunzip(filename=paste("./descarga/",file,".csv.gz",sep = ""),destname=paste("./datos/",file,".csv",sep = ""))
+    } 
+  }
+}
+```
+
+## Paso 6g
+
+Una vez con todos los archivos presentes, se leer??n todos los archivos, mostrando por cada uno el n??mero de registros y estos archivos se fusionar??n en una sola estructura de datos.
+
+```{r}
+# FILES es la lista de archivos para ser descargados.
+if( exists("Fatalities") ){
+  rm(Fatalities)
+}
+for( file in FILES$NOMBRE_ARCHIVO ){
+  # Se valida si el archivo descompactado ya existe en el ??rea de datos.
+  if(file.exists(paste("./datos/",file,".csv", sep=""))) {
+    if(!exists("Fatalities") ){
+      Fatalities<-read.csv(paste("./datos/",file,".csv", sep=""),header=T, sep=",", na.strings="")
+      datos<-read.csv(paste("./datos/",file,".csv", sep=""))
+      show(file)
+      show(nrow(datos))
+      rm(datos)
+    } else {
+        data<-read.csv(paste("./datos/",file,".csv", sep=""),header=T, sep=",", na.strings="")
+        Fatalities<-rbind(Fatalities,data)
+        show(file)
+        show(nrow(data))
+        rm(data)
+    }
+  }
+}
+show(nrow(Fatalities))
+```
